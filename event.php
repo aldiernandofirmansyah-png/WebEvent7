@@ -1,8 +1,10 @@
 <?php
-// NAMA FILE: event.php
-// DESKRIPSI: Halaman melihat banyak event untuk mahasiswa di Web Informasi Event Kampus Polibatam
-// DIBUAT OLEH: Aldi Ernando Firmansyah - NIM: [NIM Kamu]
-// TANGGAL: 12 Oktober - 14 Oktober 2025
+// ==================================================
+// Nama File: event.php
+// Deskripsi: Halaman untuk menampilkan daftar event kampus dengan filter dan detail
+// Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
+// Tanggal: 
+// ==================================================
 
 require_once 'koneksi.php';
 
@@ -23,36 +25,29 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
 
     <!-- Internal CSS -->
     <style>
-        /* Body Styling */
         body {
             background-color: #f8fafc;
             padding-top: 80px;
         }
 
-        /* Card Styling */
         .card {
             transition: transform 0.2s;
-            cursor: pointer;
         }
 
         .card:hover {
             transform: scale(1.03);
         }
 
-        /* Navbar Brand */
         .navbar-brand img {
             width: 180px;
-            height: auto;
         }
         
-        /* Card Image */
         .card-img-top {
             height: 200px;
             object-fit: cover;
-            width: 100%;
         }
         
-        /* Modal Detail Items */
+        /* MODAL STYLE TETAP SAMA */
         .modal-detail-item {
             margin-bottom: 15px;
         }
@@ -69,7 +64,6 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
             border-bottom: 1px solid #eee;
         }
 
-        /* Status Badge */
         .status-badge {
             font-size: 0.8em;
             padding: 4px 8px;
@@ -78,107 +72,92 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
 </head>
 <body>
 
-    <!-- NAVBAR SECTION -->
+    <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg bg-white shadow-sm fixed-top">
         <div class="container">
             <a class="navbar-brand" href="#">
                 <img src="logoo.png" alt="Logo Polibatam" />
             </a>
 
-            <button class="navbar-toggler" 
-                    type="button" 
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav" 
-                    aria-controls="navbarNav"
-                    aria-expanded="false" 
-                    aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
 
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav">
-                    <li class="nav-item">
-                        <a class="nav-link" href="landing_page.php">Beranda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="event.php">Event</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="kalender.php">Kalender</a>
-                    </li>
+                    <li class="nav-item"><a class="nav-link" href="landing_page.php">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="event.php">Event</a></li>
+                    <li class="nav-item"><a class="nav-link" href="kalender.php">Kalender</a></li>
                 </ul>
             </div>
         </div>
     </nav>
 
-
-    <!-- MAIN CONTENT SECTION -->
+    <!-- MAIN CONTENT -->
     <div class="container py-5">
         <h2 class="text-center mb-5 fw-bold">Informasi Event Kampus</h2>
 
-        <!-- FILTER SECTION -->
+        <!-- FILTER -->
         <div class="row mb-4 g-3">
             <div class="col-md-4">
-                <input type="text" 
-                       id="filterKataKunci" 
-                       class="form-control shadow-sm" 
-                       placeholder="Cari event..." />
+                <input type="text" id="inputFilterKataKunci" class="form-control shadow-sm" placeholder="Cari event..." />
             </div>
-
             <div class="col-md-4">
-                <select id="filterKategori" class="form-select shadow-sm">
+                <select id="selectFilterKategori" class="form-select shadow-sm">
                     <option value="">Semua Kategori</option>
                     <option value="akademik">Akademik</option>
                     <option value="non akademik">Non Akademik</option>
                 </select>
             </div>
-
             <div class="col-md-4">
-                <input type="date" id="filterTanggal" class="form-control shadow-sm" />
+                <input type="date" id="inputFilterTanggal" class="form-control shadow-sm" />
             </div>
         </div>
 
-        <!-- EVENTS LIST SECTION -->
-        <div class="row" id="eventList">
+        <!-- EVENTS LIST -->
+        <div class="row" id="containerEventList">
             <?php if (mysqli_num_rows($eventsQuery) > 0): ?>
                 <?php while ($event = mysqli_fetch_assoc($eventsQuery)): ?>
                     <?php
-                    // Prepare data attributes for filtering
-                    $eventTitle = strtolower(htmlspecialchars($event['nama_event']));
+                    // Escape data untuk keamanan
+                    $eventId = (int)$event['id'];
+                    $eventTitle = htmlspecialchars($event['nama_event'], ENT_QUOTES, 'UTF-8');
+                    $eventTitleLower = strtolower($eventTitle);
                     $eventDate = $event['tanggal_mulai'];
-                    $eventCategory = !empty($event['kategori']) ? strtolower(htmlspecialchars($event['kategori'])) : '';
+                    $eventCategory = !empty($event['kategori']) ? 
+                        strtolower(htmlspecialchars($event['kategori'], ENT_QUOTES, 'UTF-8')) : '';
+                    $eventLocation = htmlspecialchars($event['lokasi'], ENT_QUOTES, 'UTF-8');
+                    $eventImage = !empty($event['gambar']) ? 
+                        htmlspecialchars($event['gambar'], ENT_QUOTES, 'UTF-8') : '';
                     ?>
                     
-                    <div class="col-md-4 mb-4 event" 
-                         data-judul="<?= $eventTitle ?>" 
+                    <div class="col-md-4 mb-4 event-card" 
+                         data-judul="<?= $eventTitleLower ?>" 
                          data-tanggal="<?= $eventDate ?>"
                          data-kategori="<?= $eventCategory ?>">
                         
                         <div class="card h-100 shadow-sm">
-                            <?php if (!empty($event['gambar'])): ?>
-                                <img src="<?= htmlspecialchars($event['gambar']) ?>" 
+                            <?php if (!empty($eventImage)): ?>
+                                <img src="<?= $eventImage ?>" 
                                      class="card-img-top" 
-                                     alt="<?= htmlspecialchars($event['nama_event']) ?>" />
+                                     alt="<?= $eventTitle ?>" />
                             <?php else: ?>
-                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
-                                     style="height: 200px;">
+                                <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
                                     <i class="bi bi-image text-muted" style="font-size: 3rem;"></i>
                                 </div>
                             <?php endif; ?>
                             
                             <div class="card-body">
-                                <h5 class="card-title"><?= htmlspecialchars($event['nama_event']) ?></h5>
+                                <h5 class="card-title"><?= $eventTitle ?></h5>
                                 
-                                <!-- Category Badge -->
                                 <?php if (!empty($event['kategori'])): ?>
                                     <span class="badge bg-info text-dark mb-2">
-                                        <?= htmlspecialchars($event['kategori']) ?>
+                                        <?= htmlspecialchars($event['kategori'], ENT_QUOTES, 'UTF-8') ?>
                                     </span>
                                 <?php endif; ?>
                                 
                                 <p class="text-muted mb-1">
-                                    <i class="bi bi-geo-alt"></i> 
-                                    <?= htmlspecialchars($event['lokasi']) ?>
+                                    <i class="bi bi-geo-alt"></i> <?= $eventLocation ?>
                                 </p>
                                 
                                 <p class="text-muted">
@@ -190,24 +169,24 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
                                 
                                 <button class="btn btn-outline-primary w-100 mt-2" 
                                         data-bs-toggle="modal" 
-                                        data-bs-target="#modal<?= $event['id'] ?>">
+                                        data-bs-target="#modal<?= $eventId ?>">
                                     Lihat Detail
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- MODAL FOR THIS EVENT -->
+                    <!-- MODAL DETAIL -->
                     <div class="modal fade" 
-                         id="modal<?= $event['id'] ?>" 
+                         id="modal<?= $eventId ?>" 
                          tabindex="-1" 
-                         aria-labelledby="modalLabel<?= $event['id'] ?>" 
+                         aria-labelledby="labelModal<?= $eventId ?>" 
                          aria-hidden="true">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
-                                    <h5 class="modal-title fw-bold" id="modalLabel<?= $event['id'] ?>">
-                                        <?= htmlspecialchars($event['nama_event']) ?>
+                                    <h5 class="modal-title fw-bold" id="labelModal<?= $eventId ?>">
+                                        <?= $eventTitle ?>
                                     </h5>
                                     <button type="button" 
                                             class="btn-close" 
@@ -222,7 +201,7 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
                                         <div class="modal-detail-value">
                                             <?php if (!empty($event['kategori'])): ?>
                                                 <span class="badge bg-info">
-                                                    <?= htmlspecialchars($event['kategori']) ?>
+                                                    <?= htmlspecialchars($event['kategori'], ENT_QUOTES, 'UTF-8') ?>
                                                 </span>
                                             <?php else: ?>
                                                 <span class="text-muted">-</span>
@@ -234,7 +213,7 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
                                     <div class="modal-detail-item">
                                         <div class="modal-detail-label">Lokasi</div>
                                         <div class="modal-detail-value">
-                                            <?= htmlspecialchars($event['lokasi']) ?>
+                                            <?= $eventLocation ?>
                                         </div>
                                     </div>
                                     
@@ -266,7 +245,7 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
                                     <div class="modal-detail-item">
                                         <div class="modal-detail-label">Deskripsi</div>
                                         <div class="modal-detail-value">
-                                            <?= nl2br(htmlspecialchars($event['deskripsi'])) ?>
+                                            <?= nl2br(htmlspecialchars($event['deskripsi'] ?? '', ENT_QUOTES, 'UTF-8')) ?>
                                         </div>
                                     </div>
                                 </div>
@@ -292,7 +271,7 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
         </div>
     </div>
 
-    <!-- FOOTER SECTION -->
+    <!-- FOOTER -->
     <footer class="bg-light text-center py-3">
         <p class="mb-0">© Informasi Event Kampus Polibatam 2025</p>
     </footer>
@@ -302,34 +281,29 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
 
     <!-- Internal JavaScript -->
     <script>
-        // Filter Events Functionality
-        const kataKunciFilter = document.getElementById('filterKataKunci');
-        const kategoriFilter = document.getElementById('filterKategori');
-        const tanggalFilter = document.getElementById('filterTanggal');
-
+        // FILTER EVENTS FUNCTION
         function filterEvents() {
-            const kataKunciValue = kataKunciFilter.value.toLowerCase();
-            const kategoriValue = kategoriFilter.value.toLowerCase();
-            const tanggalValue = tanggalFilter.value;
-            const eventList = document.querySelectorAll('.event');
-
-            eventList.forEach(event => {
-                const judul = event.getAttribute('data-judul');
-                const kategori = event.getAttribute('data-kategori');
-                const tanggal = event.getAttribute('data-tanggal');
-
-                const matchKataKunci = !kataKunciValue || judul.includes(kataKunciValue);
-                const matchKategori = !kategoriValue || kategori === kategoriValue;
-                const matchTanggal = !tanggalValue || tanggal === tanggalValue;
-
-                event.style.display = (matchKataKunci && matchKategori && matchTanggal) ? 'block' : 'none';
+            const inputKataKunci = document.getElementById('inputFilterKataKunci').value.toLowerCase();
+            const selectKategori = document.getElementById('selectFilterKategori').value.toLowerCase();
+            const inputTanggal = document.getElementById('inputFilterTanggal').value;
+            
+            document.querySelectorAll('.event-card').forEach(eventCard => {
+                const judulEvent = eventCard.getAttribute('data-judul');
+                const kategoriEvent = eventCard.getAttribute('data-kategori');
+                const tanggalEvent = eventCard.getAttribute('data-tanggal');
+                
+                const showEvent = (!inputKataKunci || judulEvent.includes(inputKataKunci)) &&
+                                 (!selectKategori || kategoriEvent === selectKategori) &&
+                                 (!inputTanggal || tanggalEvent === inputTanggal);
+                
+                eventCard.style.display = showEvent ? 'block' : 'none';
             });
         }
 
-        // Event Listeners for Filters
-        kataKunciFilter.addEventListener('input', filterEvents);
-        kategoriFilter.addEventListener('change', filterEvents);
-        tanggalFilter.addEventListener('change', filterEvents);
+        // EVENT LISTENERS UNTUK FILTER
+        document.getElementById('inputFilterKataKunci').addEventListener('input', filterEvents);
+        document.getElementById('selectFilterKategori').addEventListener('change', filterEvents);
+        document.getElementById('inputFilterTanggal').addEventListener('change', filterEvents);
     </script>
 
 </body>
