@@ -1,180 +1,76 @@
 <?php
-// NAMA FILE: edit_event.php
-// DESKRIPSI: File untuk menangani proses pengeditan event oleh admin
-// DIBUAT OLEH: [Nama Kamu] - NIM: [NIM Kamu]
-// TANGGAL: [Tanggal Pembuatan]
+// ==================================================
+// Nama File: edit_event.php  
+// Deskripsi: File untuk memproses update data event yang ada
+// Dibuat oleh: Adetyas fauzia - NIM: 3312511023
+// Tanggal: 
+// ==================================================
 
 session_start();
 require_once 'koneksi.php';
 
-// Validasi session admin
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+// CEK LOGIN
+if (!isset($_SESSION['admin_logged_in'])) {
     header('Location: landing_page.php');
     exit();
 }
 
-// Validasi request method
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    $_SESSION['error'] = "Metode request tidak valid!";
+$idEvent = (int)$_POST['id'];
+$dataInput = array_map('trim', $_POST);
+
+// VALIDASI INPUT
+if (empty($dataInput['nama_event']) || empty($dataInput['tanggal_mulai'])) {
+    $_SESSION['error'] = "Field wajib tidak boleh kosong!";
     header('Location: dashboard.php');
     exit();
 }
 
-// Validasi CSRF token
-if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-    $_SESSION['error'] = "Token CSRF tidak valid!";
-    header('Location: dashboard.php');
-    exit();
-}
+// CEK GAMBAR LAMA
+$pathGambarLama = '';
+$stmtCekGambar = $connection->prepare("SELECT gambar FROM events WHERE id = ?");
+$stmtCekGambar->bind_param("i", $idEvent);
+$stmtCekGambar->execute();
+$stmtCekGambar->bind_result($pathGambarLama);
+$stmtCekGambar->fetch();
+$stmtCekGambar->close();
 
-// Validasi ID event
-if (!isset($_POST['id']) || !is_numeric($_POST['id'])) {
-    $_SESSION['error'] = "ID event tidak valid!";
-    header('Location: dashboard.php');
-    exit();
-}
-
-$eventId = (int)$_POST['id'];
-
-// Ambil dan sanitasi data dari form
-$namaEvent    = mysqli_real_escape_string($connection, trim($_POST['nama_event']));
-$kategori     = mysqli_real_escape_string($connection, trim($_POST['kategori']));
-$lokasi       = mysqli_real_escape_string($connection, trim($_POST['lokasi']));
-$status       = mysqli_real_escape_string($connection, trim($_POST['status']));
-$tanggalMulai = mysqli_real_escape_string($connection, trim($_POST['tanggal_mulai']));
-$tanggalSelesai = mysqli_real_escape_string($connection, trim($_POST['tanggal_selesai']));
-$deskripsi    = mysqli_real_escape_string($connection, trim($_POST['deskripsi']));
-
-// Validasi input wajib
-if (empty($namaEvent) || empty($kategori) || empty($lokasi) || 
-    empty($tanggalMulai) || empty($tanggalSelesai) || empty($deskripsi)) {
-    $_SESSION['error'] = "Semua field wajib diisi!";
-    header('Location: dashboard.php');
-    exit();
-}
-
-// Validasi panjang input
-if (strlen($namaEvent) > 255) {
-    $_SESSION['error'] = "Nama event terlalu panjang! Maksimal 255 karakter.";
-    header('Location: dashboard.php');
-    exit();
-}
-
-// Validasi tanggal
-if ($tanggalSelesai < $tanggalMulai) {
-    $_SESSION['error'] = "Tanggal selesai tidak boleh lebih awal dari tanggal mulai!";
-    header('Location: dashboard.php');
-    exit();
-}
-
-// Ambil data gambar lama
-$oldImageQuery = mysqli_query($connection, "SELECT gambar FROM events WHERE id = $eventId");
-$oldImageRow = mysqli_fetch_assoc($oldImageQuery);
-$oldImage = $oldImageRow['gambar'] ?? '';
-
-// Handle upload gambar baru
-$gambar = $oldImage; // Default pakai gambar lama
-
-if (isset($_FILES['gambar']) && $_FILES['gambar']['error'] == UPLOAD_ERR_OK) {
-    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/jpg'];
-    $fileType = mime_content_type($_FILES['gambar']['tmp_name']);
-    $fileExtension = strtolower(pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION));
-    
-    // Validasi tipe file
-    if (!in_array($fileType, $allowedTypes)) {
-        $_SESSION['error'] = "Format file tidak didukung! Hanya JPG, PNG, dan GIF yang diizinkan.";
-        header('Location: dashboard.php');
-        exit();
-    }
-    
-    // Validasi ekstensi file
-    $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
-    if (!in_array($fileExtension, $allowedExtensions)) {
-        $_SESSION['error'] = "Ekstensi file tidak valid!";
-        header('Location: dashboard.php');
-        exit();
-    }
-    
-    // Validasi ukuran file (maksimal 2MB)
-    $maxFileSize = 2 * 1024 * 1024; // 2MB
-    if ($_FILES['gambar']['size'] > $maxFileSize) {
-        $_SESSION['error'] = "Ukuran file terlalu besar! Maksimal 2MB.";
-        header('Location: dashboard.php');
-        exit();
-    }
-    
-    // Buat folder uploads jika belum ada
-    $targetDir = "uploads/";
-    if (!is_dir($targetDir)) {
-        mkdir($targetDir, 0755, true);
-    }
-    
-    // Generate nama file unik
-    $filename = 'event_' . date('Ymd_His') . '_' . uniqid() . '.' . $fileExtension;
-    $targetFile = $targetDir . $filename;
-    
-    // Pindahkan file ke folder uploads
-    if (move_uploaded_file($_FILES['gambar']['tmp_name'], $targetFile)) {
-        // Hapus gambar lama jika ada dan bukan default
-        if (!empty($oldImage) && file_exists($oldImage) && strpos($oldImage, 'uploads/') !== false) {
-            unlink($oldImage);
+// UPLOAD GAMBAR BARU (JIKA ADA)
+$pathGambarBaru = $pathGambarLama;
+if ($_FILES['gambar']['error'] == 0) {
+    $ekstensiFile = strtolower(pathinfo($_FILES['gambar']['name'], PATHINFO_EXTENSION));
+    if (in_array($ekstensiFile, ['jpg','jpeg','png','gif']) && $_FILES['gambar']['size'] <= 2097152) {
+        $namaFileBaru = 'event_' . time() . '.' . $ekstensiFile;
+        move_uploaded_file($_FILES['gambar']['tmp_name'], 'uploads/' . $namaFileBaru);
+        $pathGambarBaru = 'uploads/' . $namaFileBaru;
+        
+        // HAPUS GAMBAR LAMA
+        if ($pathGambarLama && file_exists($pathGambarLama) && strpos($pathGambarLama, 'uploads/') !== false) {
+            unlink($pathGambarLama);
         }
-        $gambar = $targetFile;
-    } else {
-        $_SESSION['error'] = "Gagal mengupload gambar!";
-        header('Location: dashboard.php');
-        exit();
     }
-} elseif ($_FILES['gambar']['error'] !== UPLOAD_ERR_NO_FILE) {
-    // Jika ada error selain "tidak ada file"
-    $_SESSION['error'] = "Error upload gambar: " . $_FILES['gambar']['error'];
-    header('Location: dashboard.php');
-    exit();
 }
 
-// Update ke database dengan prepared statement
-$query = "UPDATE events SET 
-          nama_event = ?, 
-          kategori = ?, 
-          gambar = ?, 
-          lokasi = ?, 
-          status = ?, 
-          tanggal_mulai = ?, 
-          tanggal_selesai = ?, 
-          deskripsi = ?, 
-          updated_at = NOW() 
-          WHERE id = ?";
+// UPDATE DATABASE (PREPARED STATEMENT)
+$stmtUpdate = $connection->prepare("UPDATE events SET nama_event=?, kategori=?, gambar=?, lokasi=?, status=?, tanggal_mulai=?, tanggal_selesai=?, deskripsi=? WHERE id=?");
+$stmtUpdate->bind_param("ssssssssi", 
+    $dataInput['nama_event'], 
+    $dataInput['kategori'], 
+    $pathGambarBaru, 
+    $dataInput['lokasi'], 
+    $dataInput['status'], 
+    $dataInput['tanggal_mulai'], 
+    $dataInput['tanggal_selesai'], 
+    $dataInput['deskripsi'],
+    $idEvent
+);
 
-$stmt = mysqli_prepare($connection, $query);
-
-if ($stmt) {
-    mysqli_stmt_bind_param($stmt, "ssssssssi", 
-        $namaEvent, 
-        $kategori, 
-        $gambar, 
-        $lokasi, 
-        $status, 
-        $tanggalMulai, 
-        $tanggalSelesai, 
-        $deskripsi, 
-        $eventId
-    );
-    
-    if (mysqli_stmt_execute($stmt)) {
-        $_SESSION['success'] = "Event '{$namaEvent}' berhasil diperbarui!";
-    } else {
-        $_SESSION['error'] = "Gagal memperbarui event: " . mysqli_error($connection);
-    }
-    
-    mysqli_stmt_close($stmt);
+if ($stmtUpdate->execute()) {
+    $_SESSION['success'] = "Event berhasil diupdate!";
 } else {
-    $_SESSION['error'] = "Error preparing statement: " . mysqli_error($connection);
+    $_SESSION['error'] = "Gagal update!";
 }
 
-// Regenerate CSRF token untuk keamanan
-$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-
-// Redirect ke dashboard
+$stmtUpdate->close();
 header('Location: dashboard.php');
 exit();
 ?>
