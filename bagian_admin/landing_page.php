@@ -1,12 +1,14 @@
 <?php
-// NAMA FILE: landing_page.php
-// DESKRIPSI: Halaman utama website informasi event kampus dengan form login admin
-// DIBUAT OLEH: [Nama Kamu] - NIM: [NIM Kamu]
-// TANGGAL: [Tanggal Pembuatan]
+// ==================================================
+// Nama File: landing_page.php
+// Deskripsi: Halaman utama website informasi event kampus dengan form modal login admin
+// Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
+// Tanggal: 
+// ==================================================
 
 session_start();
 
-// Cek jika sudah login, redirect ke dashboard
+// Cek jika admin sudah login, redirect ke dashboard
 if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
     header('Location: dashboard.php');
     exit();
@@ -123,29 +125,32 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
             
             <div class="row justify-content-center">
                 <div class="col-md-8 col-lg-6">
-                    <form class="p-4 border rounded-3 bg-white shadow-sm">
+                    <form id="contactForm" class="p-4 border rounded-3 bg-white shadow-sm">
                         <div class="mb-3">
-                            <label for="nama" class="form-label">Nama Lengkap</label>
+                            <label for="namaLengkap" class="form-label">Nama Lengkap</label>
                             <input type="text" 
                                    class="form-control" 
-                                   id="nama" 
+                                   id="namaLengkap" 
+                                   name="namaLengkap"
                                    placeholder="Masukkan nama Anda" 
                                    required />
                         </div>
                         
                         <div class="mb-3">
-                            <label for="email" class="form-label">Email</label>
+                            <label for="emailPengguna" class="form-label">Email</label>
                             <input type="email" 
                                    class="form-control" 
-                                   id="email" 
+                                   id="emailPengguna" 
+                                   name="emailPengguna"
                                    placeholder="Masukkan email Anda" 
                                    required />
                         </div>
                         
                         <div class="mb-3">
-                            <label for="pesan" class="form-label">Pesan</label>
+                            <label for="pesanPengguna" class="form-label">Pesan</label>
                             <textarea class="form-control" 
-                                      id="pesan" 
+                                      id="pesanPengguna" 
+                                      name="pesanPengguna"
                                       rows="4" 
                                       placeholder="Tulis pesan Anda di sini..." 
                                       required></textarea>
@@ -166,48 +171,41 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
     </footer>
 
     <!-- MODAL LOGIN ADMIN -->
-    <div class="modal fade" 
-         id="loginModal" 
-         tabindex="-1" 
-         aria-labelledby="loginModalLabel" 
-         aria-hidden="true">
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title fw-bold" id="loginModalLabel">
-                        <i class="bi bi-person-circle me-2"></i>LOGIN ADMIN
+                        LOGIN ADMIN
                     </h5>
-                    <button type="button" 
-                            class="btn-close btn-close-white" 
-                            data-bs-dismiss="modal" 
-                            aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 
                 <div class="modal-body">
                     <form id="loginForm">
                         <div class="mb-3">
-                            <label for="username" class="form-label fw-bold">Username</label>
+                            <label for="inputUsername" class="form-label">Username</label>
                             <input type="text" 
                                    class="form-control" 
-                                   id="username" 
+                                   id="inputUsername" 
                                    name="username" 
-                                   placeholder="Masukkan username" 
-                                   required />
+                                   placeholder="Masukkan username"
+                                   required>
                         </div>
                         
                         <div class="mb-3">
-                            <label for="password" class="form-label fw-bold">Password</label>
+                            <label for="inputPassword" class="form-label">Password</label>
                             <input type="password" 
                                    class="form-control" 
-                                   id="password" 
+                                   id="inputPassword" 
                                    name="password" 
-                                   placeholder="Masukkan password" 
-                                   required />
+                                   placeholder="Masukkan password"
+                                   required>
                         </div>
                         
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>LOGIN
+                            <button type="submit" class="btn btn-primary" id="btnLogin">
+                                Login
                             </button>
                         </div>
                     </form>
@@ -221,14 +219,9 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
     
     <!-- Internal JavaScript -->
     <script>
-        // LOGIN FORM HANDLER - FIXED VERSION
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const submitBtn = this.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Loading...';
-            submitBtn.disabled = true;
+        // FUNGSI HANDLE LOGIN FORM DENGAN ALERT
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault();
             
             const formData = new FormData(this);
             
@@ -239,33 +232,33 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
             .then(response => response.text())
             .then(data => {
                 if (data.trim() === 'success') {
+                    // ALERT SUKSES
+                    alert('Login berhasil!\n\nSelamat datang di Dashboard Admin.');
+                    
+                    // Redirect ke dashboard setelah alert di-OK
                     window.location.href = 'dashboard.php';
+                    
                 } else {
-                    alert('Login gagal! Username atau password salah.');
+                    // ALERT GAGAL
+                    alert('Login gagal!\n\nUsername atau password salah.');
                     this.reset();
                     
-                    // Close modal after failed login
-                    const modalInstance = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
+                    // Tutup modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+                    if (modal) modal.hide();
                 }
             })
             .catch(error => {
-                alert('Terjadi error: ' + error);
-            })
-            .finally(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
+                alert('⚠️ Terjadi error:\n\n' + error);
             });
         });
 
-        // CONTACT FORM HANDLER
-        const contactForm = document.querySelector('form');
-        if (contactForm && !contactForm.id) {
-            contactForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                alert('Terima kasih! Pesan Anda telah dikirim.');
+        // FUNGSI HANDLE CONTACT FORM
+        const contactForm = document.getElementById('contactForm');
+        if (contactForm) {
+            contactForm.addEventListener('submit', function(event) {
+                event.preventDefault();
+                alert('Terima kasih!\n\nPesan Anda telah dikirim.');
                 this.reset();
             });
         }
