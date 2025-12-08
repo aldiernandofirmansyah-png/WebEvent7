@@ -1,26 +1,27 @@
 <?php
-// NAMA FILE: database_connection.php
-// DESKRIPSI: File ini menangani koneksi ke database MySQL untuk sistem event kampus
-// DIBUAT OLEH: [Nama Kamu] - NIM: [NIM Kamu]
-// TANGGAL: [Tanggal Pembuatan]
+// ==================================================
+// Nama File: koneksi.php
+// Deskripsi: File untuk koneksi ke database event kampus
+// Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
+// Tanggal: 
+// ==================================================
 
-// Konfigurasi koneksi database
-$servername = "localhost";
-$username   = "root";
-$password   = ""; // Password default XAMPP/Laragon biasanya kosong
-$dbname     = "event_kampus";
+// Konfigurasi server database
+$servername = "localhost"; // Host database (localhost untuk development)
+$username   = "root";      // Username database
+$password   = "";          // Password database (kosong untuk XAMPP/Laragon default)
+$dbname     = "event_kampus"; // Nama database yang digunakan
 
-// Membuat koneksi
+// Membuat koneksi ke database
 $connection = mysqli_connect($servername, $username, $password, $dbname);
 
-// Cek koneksi
-if (!$connection) {
-    die("Database connection failed: " . mysqli_connect_error());
+// Cek apakah koneksi berhasil
+if (!$connection) {  
+    // Jika koneksi gagal, tampilkan pesan error dan hentikan eksekusi
+    die("Database connection failed. Please try again later.");
 }
 
-// Set charset ke UTF-8 untuk support karakter khusus
+// Set karakter encoding ke UTF-8 untuk menghindari masalah karakter
 mysqli_set_charset($connection, "utf8");
 
-// Optional: untuk testing (jangan lupa di-comment di production)
-// echo "Database connected successfully!";
 ?>
