@@ -2,20 +2,20 @@
 // ==================================================
 // Nama File: hapus_event.php
 // Deskripsi: File untuk menghapus event dari database dan sistem file
-// Dibuat oleh: Adetyas Fauzia - NIM: 3312511023
+// Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
 // Tanggal: 
 // ==================================================
 
 session_start();
 require_once 'koneksi.php';
 
-// CEK LOGIN
+// CEK LOGIN ADMIN
 if (!isset($_SESSION['admin_logged_in'])) {
     header('Location: landing_page.php');
     exit();
 }
 
-// AMBIL ID EVENT
+// AMBIL ID EVENT DARI URL
 $idEvent = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
 // AMBIL PATH GAMBAR SEBELUM HAPUS
@@ -31,14 +31,15 @@ if ($pathGambar && file_exists($pathGambar) && strpos($pathGambar, 'uploads/') !
     unlink($pathGambar);
 }
 
-// HAPUS DARI DATABASE (PREPARED STATEMENT)
+// HAPUS DATA DARI DATABASE DENGAN PREPARED STATEMENT
 $stmtHapus = $connection->prepare("DELETE FROM events WHERE id = ?");
 $stmtHapus->bind_param("i", $idEvent);
 
+// EKSEKUSI HAPUS DAN BERI FEEDBACK
 if ($stmtHapus->execute()) {
     $_SESSION['success'] = "Event berhasil dihapus!";
 } else {
-    $_SESSION['error'] = "Gagal menghapus!";
+    $_SESSION['error'] = "Gagal menghapus event!";
 }
 
 $stmtHapus->close();
