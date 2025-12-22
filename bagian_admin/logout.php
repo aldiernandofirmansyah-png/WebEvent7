@@ -14,8 +14,4 @@ session_destroy();
 // REDIRECT KE HALAMAN LANDING PAGE
 header('Location: landing_page.php');
 exit();
-<<<<<<< HEAD
 ?>
-=======
-?>
->>>>>>> 6ca2d963fd530d0042346e96c3526b5088e316b4
