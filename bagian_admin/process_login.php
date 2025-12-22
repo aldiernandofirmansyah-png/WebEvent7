@@ -1,61 +1,57 @@
 <?php
 // ==================================================
 // Nama File: process_login.php
-// Deskripsi: File untuk memproses login admin dengan validasi dan prepared statement
+// Deskripsi: File untuk memproses login admin dengan validasi sederhana
 // Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
 // Tanggal: 
 // ==================================================
 
+// Mulai session untuk menyimpan status login
 session_start();
+
+// Hubungkan ke database
 require_once 'koneksi.php';
 
-// Cek jika request method adalah POST
+// Pastikan form dikirim dengan method POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
-    // Validasi input
-    if (isset($_POST['username']) && isset($_POST['password'])) {
+    // Ambil data dari form login
+    $username = trim($_POST['username']);
+    $password = $_POST['password'];
+    
+    // PREPARED STATEMENT untuk keamanan (mencegah SQL injection)
+    $stmt = mysqli_prepare($connection, "SELECT password FROM login WHERE username = ?");
+    mysqli_stmt_bind_param($stmt, "s", $username);
+    mysqli_stmt_execute($stmt);
+    mysqli_stmt_bind_result($stmt, $db_password);
+    
+    // Jika username ditemukan di database
+    if (mysqli_stmt_fetch($stmt)) {
         
-        $username = mysqli_real_escape_string($connection, trim($_POST['username']));
-        $password = $_POST['password'];
-        
-        // PREPARED STATEMENT untuk mencegah SQL injection
-        $stmt = mysqli_prepare($connection, "SELECT * FROM login WHERE username = ?");
-        mysqli_stmt_bind_param($stmt, "s", $username);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        
-        // Jika user ditemukan
-        if ($result && mysqli_num_rows($result) > 0) {
+        // VERIFIKASI PASSWORD dengan dua metode:
+        // 1. password_verify() untuk password yang sudah di-hash
+        // 2. Perbandingan langsung untuk password plain text (backward compatibility)
+        if (password_verify($password, $db_password) || $password === $db_password) {
             
-            $user = mysqli_fetch_assoc($result);
+            // LOGIN SUKSES - set session variables
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['username'] = $username;
             
-            // CEK PASSWORD dengan dua metode:
-            // 1. password_verify() untuk password yang di-hash
-            // 2. Perbandingan plain text untuk backward compatibility
-            if (password_verify($password, $user['password']) || $password === $user['password']) {
-                
-                // Login SUKSES - set session variables
-                $_SESSION['admin_logged_in'] = true;
-                $_SESSION['username'] = $username;
-                $_SESSION['login_time'] = time();
-                
-                echo "success";
-                
-            } else {
-                echo "error"; // Password salah
-            }
+            // Kirim respon 'success' ke JavaScript
+            echo "success";
             
         } else {
-            echo "error"; // Username tidak ditemukan
+            // Password tidak cocok
+            echo "error";
         }
         
-        mysqli_stmt_close($stmt);
-        
     } else {
-        echo "error"; // Input tidak lengkap
+        // Username tidak ditemukan di database
+        echo "error";
     }
     
-} else {
-    echo "error"; // Method bukan POST
+    // Tutup prepared statement
+    mysqli_stmt_close($stmt);
+    
 }
 ?>
