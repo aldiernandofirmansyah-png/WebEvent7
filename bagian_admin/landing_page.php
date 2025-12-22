@@ -1,15 +1,15 @@
 <?php
 // ==================================================
 // Nama File: landing_page.php
-// Deskripsi: Halaman utama website informasi event kampus dengan form modal login admin
+// Deskripsi: Halaman utama website informasi event kampus
 // Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
 // Tanggal: 
 // ==================================================
 
 session_start();
 
-// Cek jika admin sudah login, redirect ke dashboard
-if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
+// Redirect jika sudah login
+if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in']) {
     header('Location: dashboard.php');
     exit();
 }
@@ -20,34 +20,25 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Informasi Event Kampus</title>
-    
-    <!-- External Stylesheets -->
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
-    
-    <!-- Internal CSS -->
     <style>
-        /* Hero Section */
         .hero {
             height: 100vh;
             background: url("latar.jpg") center/cover no-repeat;
             position: relative;
         }
-        
         .hero::after {
             content: "";
             position: absolute;
             inset: 0;
             background: rgba(0, 0, 0, 0.5);
         }
-        
         .hero-content {
             position: relative;
             z-index: 2;
             color: #fff;
         }
-        
-        /* Body Styling */
         body {
             padding-top: 80px;
         }
@@ -60,33 +51,16 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
             <a class="navbar-brand" href="#">
                 <img src="logoo.png" width="200" alt="Logo Event Kampus" />
             </a>
-            
-            <button class="navbar-toggler" 
-                    type="button" 
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navbarNav" 
-                    aria-controls="navbarNav"
-                    aria-expanded="false" 
-                    aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link active" href="landing_page.php">Beranda</a></li>
+                    <li class="nav-item"><a class="nav-link" href="event.php">Event</a></li>
+                    <li class="nav-item"><a class="nav-link" href="kalender.php">Kalender</a></li>
                     <li class="nav-item">
-                        <a class="nav-link active" href="landing_page.php">Beranda</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="event.php">Event</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="kalender.php">Kalender</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link btn btn-primary text-dark px-3" 
-                           href="#" 
-                           data-bs-toggle="modal" 
-                           data-bs-target="#loginModal">
+                        <a class="nav-link btn btn-primary text-dark px-3" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">
                             Login Admin
                         </a>
                     </li>
@@ -99,13 +73,11 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
     <section class="hero d-flex align-items-center text-center">
         <div class="container hero-content">
             <h1 class="display-5 fw-bold">Selamat Datang di Informasi Event Kampus Polibatam</h1>
-            <p class="mt-3 fs-5">
-                Silahkan melihat lihat event yang anda tunggu tunggu di Website ini yaaaaa.
-            </p>
+            <p class="mt-3 fs-5">Silahkan melihat lihat event yang anda tunggu tunggu di Website ini yaaaaa.</p>
         </div>
     </section>
 
-    <!-- TENTANG EVENT SECTION -->
+    <!-- TENTANG EVENT -->
     <section id="tentang" class="py-5 bg-light">
         <div class="container text-center">
             <h2 class="fw-bold mb-3">Tentang Informasi Event Kampus Polibatam</h2>
@@ -122,40 +94,21 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
                 <h2 class="fw-bold">Hubungi Kami</h2>
                 <p class="text-muted">Ada pertanyaan atau saran terkait event ya? Silakan kirim pesan Anda di bawah ini.</p>
             </div>
-            
             <div class="row justify-content-center">
                 <div class="col-md-8 col-lg-6">
                     <form id="contactForm" class="p-4 border rounded-3 bg-white shadow-sm">
                         <div class="mb-3">
                             <label for="namaLengkap" class="form-label">Nama Lengkap</label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="namaLengkap" 
-                                   name="namaLengkap"
-                                   placeholder="Masukkan nama Anda" 
-                                   required />
+                            <input type="text" class="form-control" id="namaLengkap" name="namaLengkap" placeholder="Masukkan nama Anda" required />
                         </div>
-                        
                         <div class="mb-3">
                             <label for="emailPengguna" class="form-label">Email</label>
-                            <input type="email" 
-                                   class="form-control" 
-                                   id="emailPengguna" 
-                                   name="emailPengguna"
-                                   placeholder="Masukkan email Anda" 
-                                   required />
+                            <input type="email" class="form-control" id="emailPengguna" name="emailPengguna" placeholder="Masukkan email Anda" required />
                         </div>
-                        
                         <div class="mb-3">
                             <label for="pesanPengguna" class="form-label">Pesan</label>
-                            <textarea class="form-control" 
-                                      id="pesanPengguna" 
-                                      name="pesanPengguna"
-                                      rows="4" 
-                                      placeholder="Tulis pesan Anda di sini..." 
-                                      required></textarea>
+                            <textarea class="form-control" id="pesanPengguna" name="pesanPengguna" rows="4" placeholder="Tulis pesan Anda di sini..." required></textarea>
                         </div>
-                        
                         <div class="d-grid">
                             <button type="submit" class="btn btn-primary">Kirim Pesan</button>
                         </div>
@@ -171,42 +124,25 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
     </footer>
 
     <!-- MODAL LOGIN ADMIN -->
-    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal fade" id="loginModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title fw-bold" id="loginModalLabel">
-                        LOGIN ADMIN
-                    </h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title fw-bold">LOGIN ADMIN</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                
                 <div class="modal-body">
                     <form id="loginForm">
                         <div class="mb-3">
                             <label for="inputUsername" class="form-label">Username</label>
-                            <input type="text" 
-                                   class="form-control" 
-                                   id="inputUsername" 
-                                   name="username" 
-                                   placeholder="Masukkan username"
-                                   required>
+                            <input type="text" class="form-control" id="inputUsername" name="username" placeholder="Masukkan username" required>
                         </div>
-                        
                         <div class="mb-3">
                             <label for="inputPassword" class="form-label">Password</label>
-                            <input type="password" 
-                                   class="form-control" 
-                                   id="inputPassword" 
-                                   name="password" 
-                                   placeholder="Masukkan password"
-                                   required>
+                            <input type="password" class="form-control" id="inputPassword" name="password" placeholder="Masukkan password" required>
                         </div>
-                        
                         <div class="d-grid">
-                            <button type="submit" class="btn btn-primary" id="btnLogin">
-                                Login
-                            </button>
+                            <button type="submit" class="btn btn-primary">Login</button>
                         </div>
                     </form>
                 </div>
@@ -214,54 +150,58 @@ if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
         </div>
     </div>
 
-    <!-- External JavaScript -->
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- Internal JavaScript -->
     <script>
-        // FUNGSI HANDLE LOGIN FORM DENGAN ALERT
-        document.getElementById('loginForm').addEventListener('submit', function(event) {
-            event.preventDefault();
-            
-            const formData = new FormData(this);
-            
+        // Login Handler
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
             fetch('process_login.php', {
                 method: 'POST',
-                body: formData
+                body: new FormData(this)
             })
-            .then(response => response.text())
+            .then(r => r.text())
             .then(data => {
                 if (data.trim() === 'success') {
-                    // ALERT SUKSES
                     alert('Login berhasil!\n\nSelamat datang di Dashboard Admin.');
-                    
-                    // Redirect ke dashboard setelah alert di-OK
                     window.location.href = 'dashboard.php';
-                    
                 } else {
-                    // ALERT GAGAL
                     alert('Login gagal!\n\nUsername atau password salah.');
                     this.reset();
-                    
-                    // Tutup modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
-                    if (modal) modal.hide();
+                    bootstrap.Modal.getInstance(document.getElementById('loginModal'))?.hide();
                 }
             })
-            .catch(error => {
-                alert('⚠️ Terjadi error:\n\n' + error);
-            });
+            .catch(err => alert('⚠️ Terjadi error:\n\n' + err));
         });
 
-        // FUNGSI HANDLE CONTACT FORM
-        const contactForm = document.getElementById('contactForm');
-        if (contactForm) {
-            contactForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                alert('Terima kasih!\n\nPesan Anda telah dikirim.');
-                this.reset();
+        // Contact Form Handler
+        document.getElementById('contactForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = this.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Mengirim...';
+            btn.disabled = true;
+            
+            fetch('process_contact.php', {
+                method: 'POST',
+                body: new FormData(this)
+            })
+            .then(r => r.text())
+            .then(data => {
+                const messages = {
+                    'success': ' Terima kasih!\n\nPesan Anda telah disimpan.',
+                    'error_empty': ' Gagal!\n\nSemua kolom harus diisi.',
+                    'error_email': ' Gagal!\n\nFormat email tidak valid.'
+                };
+                alert(messages[data] || ' Terjadi kesalahan. Silakan coba lagi.');
+                if (data === 'success') this.reset();
+            })
+            .catch(err => alert(' Error koneksi: ' + err))
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             });
-        }
+        });
     </script>
 </body>
 </html>
