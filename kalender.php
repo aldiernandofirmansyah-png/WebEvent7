@@ -1,7 +1,7 @@
 <?php
 // ==================================================
 // Nama File: kalender.php
-// Deskripsi: Halaman kalender event kampus dengan navigasi bulan dan daftar event
+// Deskripsi: Halaman kalender event kampus
 // Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
 // Tanggal: 
 // ==================================================
@@ -9,87 +9,74 @@
 require_once 'koneksi.php';
 date_default_timezone_set('Asia/Jakarta');
 
-// ========== AMBIL BULAN & TAHUN ==========
-$bulanSekarang = isset($_GET['bulan']) ? (int)$_GET['bulan'] : date('n');
-$tahunSekarang = isset($_GET['tahun']) ? (int)$_GET['tahun'] : date('Y');
+// AMBIL BULAN DAN TAHUN DARI URL
+$bulan = isset($_GET['bulan']) ? max(1, min(12, (int)$_GET['bulan'])) : date('n');
+$tahun = isset($_GET['tahun']) ? max(2020, min(2100, (int)$_GET['tahun'])) : date('Y');
 
-// Validasi input
-$bulanSekarang = max(1, min(12, $bulanSekarang));
-$tahunSekarang = max(2020, min(2100, $tahunSekarang));
-
-// ========== NAVIGASI BULAN ==========
-$bulanSebelum = $bulanSekarang - 1;
-$tahunSebelum = $tahunSekarang;
-if ($bulanSebelum < 1) {
-    $bulanSebelum = 12;
-    $tahunSebelum = $tahunSekarang - 1;
+// HITUNG BULAN SEBELUM DAN SESUDAH UNTUK NAVIGASI
+$bulanPrev = $bulan - 1;
+$tahunPrev = $tahun;
+if ($bulanPrev < 1) {
+    $bulanPrev = 12;
+    $tahunPrev = $tahun - 1;
 }
 
-$bulanSesudah = $bulanSekarang + 1;
-$tahunSesudah = $tahunSekarang;
-if ($bulanSesudah > 12) {
-    $bulanSesudah = 1;
-    $tahunSesudah = $tahunSekarang + 1;
+$bulanNext = $bulan + 1;
+$tahunNext = $tahun;
+if ($bulanNext > 12) {
+    $bulanNext = 1;
+    $tahunNext = $tahun + 1;
 }
 
-// ========== DATA KALENDER ==========
-$daftarNamaBulan = [
+// DATA NAMA BULAN DAN HARI
+$namaBulan = [
     1 => 'JANUARI', 2 => 'FEBRUARI', 3 => 'MARET', 4 => 'APRIL', 
     5 => 'MEI', 6 => 'JUNI', 7 => 'JULI', 8 => 'AGUSTUS', 
     9 => 'SEPTEMBER', 10 => 'OKTOBER', 11 => 'NOVEMBER', 12 => 'DESEMBER'
 ];
+$namaHari = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
 
-$daftarNamaHari = ['MIN', 'SEN', 'SEL', 'RAB', 'KAM', 'JUM', 'SAB'];
+// AMBIL EVENT BULAN INI DARI DATABASE
+$tanggalAwal = "$tahun-$bulan-01";
+$tanggalAkhir = date('Y-m-t', strtotime($tanggalAwal));
 
-// ========== AMBIL EVENT BULAN INI ==========
-$tanggalMulaiBulan = "$tahunSekarang-$bulanSekarang-01";
-$tanggalAkhirBulan = date('Y-m-t', strtotime($tanggalMulaiBulan));
+$stmt = mysqli_prepare($connection, 
+    "SELECT * FROM events 
+     WHERE status='aktif' 
+     AND tanggal_mulai <= ? 
+     AND tanggal_selesai >= ? 
+     ORDER BY tanggal_mulai ASC");
 
-// Query dengan prepared statement untuk keamanan
-$queryEvent = "SELECT * FROM events 
-          WHERE status = 'aktif' 
-          AND (
-              (tanggal_mulai BETWEEN ? AND ?) 
-              OR (tanggal_selesai BETWEEN ? AND ?)
-              OR (? BETWEEN tanggal_mulai AND tanggal_selesai)
-          )
-          ORDER BY tanggal_mulai ASC";
+mysqli_stmt_bind_param($stmt, "ss", $tanggalAkhir, $tanggalAwal);
+mysqli_stmt_execute($stmt);
+$events = mysqli_stmt_get_result($stmt);
+$eventsBulanIni = mysqli_fetch_all($events, MYSQLI_ASSOC);
+mysqli_stmt_close($stmt);
 
-$stmtEvent = mysqli_prepare($connection, $queryEvent);
-mysqli_stmt_bind_param($stmtEvent, "sssss", $tanggalMulaiBulan, $tanggalAkhirBulan, $tanggalMulaiBulan, $tanggalAkhirBulan, $tanggalMulaiBulan);
-mysqli_stmt_execute($stmtEvent);
-$resultEvent = mysqli_stmt_get_result($stmtEvent);
-
-$eventsBulanIni = [];
-while ($dataEvent = mysqli_fetch_assoc($resultEvent)) {
-    $eventsBulanIni[] = $dataEvent;
-}
-mysqli_stmt_close($stmtEvent);
-
-// ========== BUAT KALENDER ==========
-$hariPertamaBulan = date('w', strtotime($tanggalMulaiBulan));
-$jumlahHariBulan = date('t', strtotime($tanggalMulaiBulan));
-$tanggalHariIni = date('j');
-$bulanHariIni = date('n');
-$tahunHariIni = date('Y');
-
-// Event per tanggal
+// KELOMPOKKAN EVENT BERDASARKAN TANGGAL
 $eventsPerTanggal = [];
 foreach ($eventsBulanIni as $event) {
-    $tanggalMulaiEvent = new DateTime($event['tanggal_mulai']);
-    $tanggalSelesaiEvent = new DateTime($event['tanggal_selesai']);
-    $tanggalSelesaiEvent->modify('+1 day');
+    $start = new DateTime($event['tanggal_mulai']);
+    $end = new DateTime($event['tanggal_selesai']);
+    $end->modify('+1 day');
     
-    $intervalHari = new DateInterval('P1D');
-    $periodeEvent = new DatePeriod($tanggalMulaiEvent, $intervalHari, $tanggalSelesaiEvent);
+    $interval = new DateInterval('P1D');
+    $period = new DatePeriod($start, $interval, $end);
     
-    foreach ($periodeEvent as $tanggal) {
-        if ($tanggal->format('n') == $bulanSekarang && $tanggal->format('Y') == $tahunSekarang) {
-            $tanggalEvent = (int)$tanggal->format('j');
-            $eventsPerTanggal[$tanggalEvent][] = $event;
+    foreach ($period as $date) {
+        if ($date->format('n') == $bulan && $date->format('Y') == $tahun) {
+            $day = (int)$date->format('j');
+            $eventsPerTanggal[$day][] = $event;
         }
     }
 }
+
+// DATA UNTUK KALENDER
+$hariPertama = date('w', strtotime($tanggalAwal));
+$jumlahHari = date('t', strtotime($tanggalAwal));
+$hariIni = date('j');
+$bulanIni = date('n');
+$tahunIni = date('Y');
 ?>
 
 <!DOCTYPE html>
@@ -98,109 +85,29 @@ foreach ($eventsBulanIni as $event) {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Kalender Event Kampus</title>
-    
-    <!-- External Stylesheets -->
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet" />
-    
-    <!-- Internal CSS -->
     <style>
-        body {
-            background-color: #f8fafc;
-            padding-top: 80px;
-        }
-        
-        .navbar-brand img {
-            width: 180px;
-            height: auto;
-        }
-        
-        .calendar-table {
-            width: 100%;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        
-        .calendar-table th {
-            background: #007bff;
-            color: white;
-            padding: 15px 5px;
-            text-align: center;
-            font-weight: bold;
-        }
-        
-        .calendar-table td {
-            padding: 15px 5px;
-            text-align: center;
-            border: 1px solid #dee2e6;
-            height: 80px;
-            vertical-align: top;
-        }
-        
-        .calendar-table td.other-month {
-            background: #f8f9fa;
-            color: #adb5bd;
-        }
-        
-        .calendar-table td.today {
-            background: #e7f3ff;
-            font-weight: bold;
-        }
-        
-        .calendar-table td.has-event {
-            background: #fff3cd;
-        }
-        
-        .day-number {
-            font-size: 1.1em;
-            margin-bottom: 5px;
-        }
-        
-        .event-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin: 0 1px;
-        }
-        
-        .event-dot.akademik { background: #28a745; }
-        .event-dot.non-akademik { background: #dc3545; }
-        
-        .event-count {
-            font-size: 0.7em;
-            color: #6c757d;
-            margin-top: 2px;
-        }
-        
-        .calendar-nav {
-            background: #007bff;
-            color: white;
-            padding: 15px 0;
-            border-radius: 10px 10px 0 0;
-        }
-        
-        .legend {
-            padding: 8px 0;
-            background: #f8f9fa;
-            border-bottom: 1px solid #dee2e6;
-        }
+        body { padding-top: 80px; background-color: #f8fafc; }
+        .kalender { background: white; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .kalender th { background: #007bff; color: white; padding: 15px; text-align: center; }
+        .kalender td { padding: 15px; text-align: center; border: 1px solid #dee2e6; height: 80px; }
+        .kalender td.bulan-lain { background: #f8f9fa; color: #adb5bd; }
+        .kalender td.hari-ini { background: #e7f3ff; font-weight: bold; }
+        .kalender td.ada-event { background: #fff3cd; }
+        .dot-event { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin: 0 1px; }
+        .dot-akademik { background: #28a745; }
+        .dot-non-akademik { background: #dc3545; }
     </style>
 </head>
 <body>
-
-    <!-- NAVBAR -->
+    <!-- NAVBAR UTAMA -->
     <nav class="navbar navbar-expand-lg bg-white shadow-sm fixed-top">
         <div class="container">
-            <a class="navbar-brand" href="#">
-                <img src="logoo.png" alt="Logo Polibatam" />
-            </a>
-
+            <a class="navbar-brand" href="#"><img src="logoo.png" alt="Logo Polibatam" width="180" /></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item"><a class="nav-link" href="landing_page.php">Beranda</a></li>
@@ -211,105 +118,93 @@ foreach ($eventsBulanIni as $event) {
         </div>
     </nav>
 
-    <!-- MAIN CONTENT -->
+    <!-- KONTEN UTAMA -->
     <div class="container py-5">
         <h2 class="text-center mb-4 fw-bold">KALENDER EVENT KAMPUS</h2>
 
         <!-- KALENDER -->
         <div class="row justify-content-center mb-5">
             <div class="col-lg-10">
-                <div class="calendar-table">
-                    
-                    <!-- NAVIGASI -->
-                    <div class="calendar-nav">
+                <div class="kalender">
+                    <!-- NAVIGASI BULAN -->
+                    <div class="bg-primary text-white p-3 rounded-top">
                         <div class="row align-items-center">
                             <div class="col text-center">
-                                <a href="kalender.php?bulan=<?= $bulanSebelum ?>&tahun=<?= $tahunSebelum ?>" class="btn btn-sm btn-light">
+                                <a href="kalender.php?bulan=<?= $bulanPrev ?>&tahun=<?= $tahunPrev ?>" class="btn btn-sm btn-light">
                                     <i class="bi bi-chevron-left"></i>
                                 </a>
                             </div>
-                            
                             <div class="col-6 text-center">
-                                <h4 class="mb-0 fw-bold text-white">
-                                    <?= htmlspecialchars($daftarNamaBulan[$bulanSekarang]) ?> <?= htmlspecialchars($tahunSekarang) ?>
-                                </h4>
+                                <h4 class="mb-0 fw-bold"><?= $namaBulan[$bulan] ?> <?= $tahun ?></h4>
                             </div>
-                            
                             <div class="col text-center">
-                                <a href="kalender.php?bulan=<?= $bulanSesudah ?>&tahun=<?= $tahunSesudah ?>" class="btn btn-sm btn-light">
+                                <a href="kalender.php?bulan=<?= $bulanNext ?>&tahun=<?= $tahunNext ?>" class="btn btn-sm btn-light">
                                     <i class="bi bi-chevron-right"></i>
                                 </a>
                             </div>
                         </div>
                     </div>
                     
-                    <!-- LEGEND -->
-                    <div class="legend text-center">
+                    <!-- LEGEND KATEGORI -->
+                    <div class="text-center py-2 bg-light border-bottom">
                         <small class="text-muted">
-                            <span class="me-3">
-                                <span class="event-dot akademik d-inline-block me-1"></span> Akademik
-                            </span>
-                            <span>
-                                <span class="event-dot non-akademik d-inline-block me-1"></span> Non Akademik
-                            </span>
+                            <span class="me-3"><span class="dot-event dot-akademik d-inline-block me-1"></span> Akademik</span>
+                            <span><span class="dot-event dot-non-akademik d-inline-block me-1"></span> Non Akademik</span>
                         </small>
                     </div>
                     
-                    <!-- TABLE KALENDER -->
+                    <!-- TABEL KALENDER -->
                     <table class="table table-bordered mb-0">
                         <thead>
                             <tr>
-                                <?php foreach ($daftarNamaHari as $namaHari): ?>
-                                    <th><?= htmlspecialchars($namaHari) ?></th>
+                                <?php foreach ($namaHari as $hari): ?>
+                                    <th><?= $hari ?></th>
                                 <?php endforeach; ?>
                             </tr>
                         </thead>
                         <tbody>
-                            <?php
-                            $counterTanggal = 1;
-                            for ($minggu = 0; $minggu < 6; $minggu++):
-                                if ($counterTanggal > $jumlahHariBulan) break;
-                            ?>
+                            <?php $hariKe = 1; ?>
+                            <?php for ($minggu = 0; $minggu < 6; $minggu++): ?>
+                                <?php if ($hariKe > $jumlahHari) break; ?>
                                 <tr>
-                                    <?php for ($hari = 0; $hari < 7; $hari++): 
-                                        $isBulanLain = ($minggu == 0 && $hari < $hariPertamaBulan) || $counterTanggal > $jumlahHariBulan;
-                                        $isHariIni = !$isBulanLain && $counterTanggal == $tanggalHariIni && $bulanSekarang == $bulanHariIni && $tahunSekarang == $tahunHariIni;
-                                        $isAdaEvent = !$isBulanLain && isset($eventsPerTanggal[$counterTanggal]);
+                                    <?php for ($indexHari = 0; $indexHari < 7; $indexHari++): ?>
+                                        <?php
+                                        $isBulanLain = ($minggu == 0 && $indexHari < $hariPertama) || $hariKe > $jumlahHari;
+                                        $isHariIni = !$isBulanLain && $hariKe == $hariIni && $bulan == $bulanIni && $tahun == $tahunIni;
+                                        $isAdaEvent = !$isBulanLain && isset($eventsPerTanggal[$hariKe]);
                                         
-                                        $kelasSel = '';
-                                        if ($isBulanLain) $kelasSel = 'other-month';
-                                        if ($isHariIni) $kelasSel = 'today';
-                                        if ($isAdaEvent) $kelasSel = 'has-event';
-                                    ?>
-                                        <td class="<?= $kelasSel ?>">
+                                        $kelas = '';
+                                        if ($isBulanLain) $kelas = 'bulan-lain';
+                                        if ($isHariIni) $kelas = 'hari-ini';
+                                        if ($isAdaEvent) $kelas = 'ada-event';
+                                        ?>
+                                        <td class="<?= $kelas ?>">
                                             <?php if (!$isBulanLain): ?>
-                                                <div class="day-number"><?= $counterTanggal ?></div>
+                                                <div class="fw-bold"><?= $hariKe ?></div>
                                                 
                                                 <?php if ($isAdaEvent): ?>
                                                     <div>
-                                                        <?php 
-                                                        $daftarKategori = [];
-                                                        foreach ($eventsPerTanggal[$counterTanggal] as $eventHariIni) {
-                                                            $kategoriEvent = strtolower(str_replace(' ', '-', htmlspecialchars($eventHariIni['kategori'] ?? '')));
-                                                            if (!empty($kategoriEvent)) {
-                                                                $daftarKategori[$kategoriEvent] = true;
+                                                        <?php
+                                                        $kategoriUnik = [];
+                                                        foreach ($eventsPerTanggal[$hariKe] as $ev) {
+                                                            $kat = strtolower($ev['kategori'] ?? '');
+                                                            if ($kat && !in_array($kat, $kategoriUnik)) {
+                                                                $kategoriUnik[] = $kat;
                                                             }
                                                         }
-                                                        foreach ($daftarKategori as $kategori => $nilai): 
-                                                            if ($kategori == 'akademik' || $kategori == 'non-akademik'):
-                                                        ?>
-                                                            <span class="event-dot <?= htmlspecialchars($kategori) ?>"></span>
-                                                        <?php 
-                                                            endif;
-                                                        endforeach; 
+                                                        foreach ($kategoriUnik as $kat):
+                                                            if ($kat == 'akademik'): ?>
+                                                                <span class="dot-event dot-akademik"></span>
+                                                            <?php elseif ($kat == 'non akademik'): ?>
+                                                                <span class="dot-event dot-non-akademik"></span>
+                                                            <?php endif;
+                                                        endforeach;
                                                         ?>
                                                     </div>
-                                                    <div class="event-count">
-                                                        <?= count($eventsPerTanggal[$counterTanggal]) ?> event
-                                                    </div>
+                                                    <small class="text-muted"><?= count($eventsPerTanggal[$hariKe]) ?> event</small>
                                                 <?php endif; ?>
                                                 
-                                                <?php $counterTanggal++; ?>
+                                                <?php $hariKe++; ?>
                                             <?php endif; ?>
                                         </td>
                                     <?php endfor; ?>
@@ -321,45 +216,41 @@ foreach ($eventsBulanIni as $event) {
             </div>
         </div>
 
-        <!-- DAFTAR EVENT -->
+        <!-- DAFTAR EVENT BULAN INI -->
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <div class="card shadow-sm">
                     <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0">Daftar Event <?= htmlspecialchars($daftarNamaBulan[$bulanSekarang]) ?> <?= htmlspecialchars($tahunSekarang) ?></h5>
+                        <h5 class="mb-0">Daftar Event <?= $namaBulan[$bulan] ?> <?= $tahun ?></h5>
                     </div>
-                    
                     <div class="card-body">
                         <?php if (count($eventsBulanIni) > 0): ?>
-                            <?php foreach ($eventsBulanIni as $eventDetail): 
-                                $namaEventDetail = htmlspecialchars($eventDetail['nama_event'] ?? '', ENT_QUOTES, 'UTF-8');
-                                $lokasiEventDetail = htmlspecialchars($eventDetail['lokasi'] ?? '', ENT_QUOTES, 'UTF-8');
-                                $kategoriEventDetail = htmlspecialchars($eventDetail['kategori'] ?? '', ENT_QUOTES, 'UTF-8');
-                            ?>
+                            <?php foreach ($eventsBulanIni as $ev): ?>
                                 <div class="card mb-2">
                                     <div class="card-body py-3">
                                         <div class="row align-items-center">
                                             <div class="col-md-3">
                                                 <strong>
-                                                    <?= date('d M', strtotime($eventDetail['tanggal_mulai'])) ?>
-                                                    <?php if ($eventDetail['tanggal_mulai'] != $eventDetail['tanggal_selesai']): ?>
-                                                        - <?= date('d M', strtotime($eventDetail['tanggal_selesai'])) ?>
+                                                    <?= date('d M', strtotime($ev['tanggal_mulai'])) ?>
+                                                    <?php if ($ev['tanggal_mulai'] != $ev['tanggal_selesai']): ?>
+                                                        - <?= date('d M', strtotime($ev['tanggal_selesai'])) ?>
                                                     <?php endif; ?>
                                                 </strong>
                                             </div>
-                                            
-                                            <div class="col-md-8">
-                                                <h6 class="mb-1"><?= $namaEventDetail ?></h6>
+                                            <div class="col-md-7">
+                                                <h6 class="mb-1"><?= htmlspecialchars($ev['nama_event'] ?? '') ?></h6>
                                                 <p class="text-muted mb-0 small">
-                                                    <i class="bi bi-geo-alt"></i> 
-                                                    <?= $lokasiEventDetail ?>
-                                                    <?php if (!empty($kategoriEventDetail)): ?>
-                                                        <span class="badge bg-info ms-2"><?= $kategoriEventDetail ?></span>
+                                                    <i class="bi bi-clock"></i> 
+                                                    <?= date('H:i', strtotime($ev['waktu_mulai'])) ?> - 
+                                                    <?= date('H:i', strtotime($ev['waktu_selesai'])) ?>
+                                                    <br>
+                                                    <i class="bi bi-geo-alt"></i> <?= htmlspecialchars($ev['lokasi'] ?? '') ?>
+                                                    <?php if (!empty($ev['kategori'])): ?>
+                                                        <span class="badge bg-info ms-2"><?= htmlspecialchars($ev['kategori']) ?></span>
                                                     <?php endif; ?>
                                                 </p>
                                             </div>
-                                            
-                                            <div class="col-md-1 text-end">
+                                            <div class="col-md-2 text-end">
                                                 <span class="badge bg-success">Aktif</span>
                                             </div>
                                         </div>
@@ -370,7 +261,7 @@ foreach ($eventsBulanIni as $event) {
                             <div class="text-center py-4">
                                 <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
                                 <p class="text-muted mt-3">
-                                    Tidak ada event di bulan <?= htmlspecialchars($daftarNamaBulan[$bulanSekarang]) ?> <?= htmlspecialchars($tahunSekarang) ?>
+                                    Tidak ada event di bulan <?= $namaBulan[$bulan] ?> <?= $tahun ?>
                                 </p>
                             </div>
                         <?php endif; ?>
@@ -380,12 +271,12 @@ foreach ($eventsBulanIni as $event) {
         </div>
     </div>
 
-    <!-- FOOTER -->
+    <!-- FOOTER HALAMAN -->
     <footer class="bg-light text-center py-3 mt-5">
         <p class="mb-0">© Informasi Event Kampus Polibatam 2025</p>
     </footer>
 
-    <!-- External JavaScript -->
+    <!-- SCRIPT BOOTSTRAP -->
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
