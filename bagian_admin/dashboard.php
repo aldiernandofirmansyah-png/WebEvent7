@@ -9,35 +9,23 @@
 session_start();
 require_once 'koneksi.php';
 
-// ========== CEK LOGIN ==========
+// CEK LOGIN ADMIN
 if (!isset($_SESSION['admin_logged_in'])) {
     header('Location: landing_page.php');
     exit();
 }
 
-// ========== CSRF TOKEN ==========
+// BUAT CSRF TOKEN JIKA BELUM ADA
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// ========== STATISTIK ==========
-// Gunakan prepared statement untuk keamanan
-$stmtTotalEvent = $connection->prepare("SELECT COUNT(*) AS total FROM events");
-$stmtTotalEvent->execute();
-$totalEvent = $stmtTotalEvent->get_result()->fetch_assoc()['total'];
-$stmtTotalEvent->close();
+// HITUNG STATISTIK EVENT
+$totalEvent = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) FROM events"))['COUNT(*)'];
+$eventAktif = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) FROM events WHERE status='aktif'"))['COUNT(*)'];
+$eventDraft = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) FROM events WHERE status='draft'"))['COUNT(*)'];
 
-$stmtEventAktif = $connection->prepare("SELECT COUNT(*) AS aktif FROM events WHERE status = 'aktif'");
-$stmtEventAktif->execute();
-$eventAktif = $stmtEventAktif->get_result()->fetch_assoc()['aktif'];
-$stmtEventAktif->close();
-
-$stmtEventDraft = $connection->prepare("SELECT COUNT(*) AS draft FROM events WHERE status = 'draft'");
-$stmtEventDraft->execute();
-$eventDraft = $stmtEventDraft->get_result()->fetch_assoc()['draft'];
-$stmtEventDraft->close();
-
-// ========== AMBIL EVENT ==========
+// AMBIL SEMUA EVENT UNTUK DITAMPILKAN
 $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC");
 ?>
 
@@ -47,20 +35,17 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Dashboard Admin - Informasi Event Kampus</title>
-    
-    <!-- External Stylesheets -->
     <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet" />
 </head>
 <body class="bg-light">
     <div class="container-fluid">
         <div class="row">
-            <!-- SIDEBAR -->
+            <!-- SIDEBAR NAVIGASI -->
             <nav class="col-md-3 col-lg-2 d-md-block bg-dark sidebar text-white min-vh-100">
                 <div class="text-center py-3 border-bottom">
                     <img src="logoo.png" alt="Logo Polibatam" width="160" class="img-fluid mb-2" />
                 </div>
-                
                 <ul class="nav flex-column mt-3">
                     <li class="nav-item">
                         <a class="nav-link text-white active" href="dashboard.php">
@@ -75,9 +60,9 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                 </ul>
             </nav>
 
-            <!-- MAIN CONTENT -->
+            <!-- KONTEN UTAMA -->
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
-                <!-- ALERTS -->
+                <!-- NOTIFIKASI SUKSES/ERROR -->
                 <?php if (isset($_SESSION['success'])): ?>
                     <div class="alert alert-success alert-dismissible fade show">
                         <?= htmlspecialchars($_SESSION['success']) ?>
@@ -94,50 +79,47 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                     <?php unset($_SESSION['error']); ?>
                 <?php endif; ?>
 
-                <!-- HEADER -->
+                <!-- HEADER DASHBOARD -->
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="fw-bold text-dark">Selamat Datang, admin <?php echo htmlspecialchars($_SESSION['username']); ?></h2>
+                    <h2 class="fw-bold text-dark">Selamat Datang, admin <?= htmlspecialchars($_SESSION['username']) ?></h2>
                     <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#modalTambahEvent">
                         <i class="bi bi-plus-lg me-1"></i> Tambah Event
                     </button>
                 </div>
 
-                <!-- STATISTIK -->
+                <!-- STATISTIK EVENT -->
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
                         <div class="card border-primary text-center">
                             <div class="card-body">
                                 <h6 class="text-muted mb-2">Total Event</h6>
-                                <h3 class="fw-bold text-primary"><?= htmlspecialchars($totalEvent) ?></h3>
+                                <h3 class="fw-bold text-primary"><?= $totalEvent ?></h3>
                             </div>
                         </div>
                     </div>
-                    
                     <div class="col-md-4">
                         <div class="card border-success text-center">
                             <div class="card-body">
                                 <h6 class="text-muted mb-2">Event Aktif</h6>
-                                <h3 class="fw-bold text-success"><?= htmlspecialchars($eventAktif) ?></h3>
+                                <h3 class="fw-bold text-success"><?= $eventAktif ?></h3>
                             </div>
                         </div>
                     </div>
-                    
                     <div class="col-md-4">
                         <div class="card border-warning text-center">
                             <div class="card-body">
                                 <h6 class="text-muted mb-2">Event Draft</h6>
-                                <h3 class="fw-bold text-warning"><?= htmlspecialchars($eventDraft) ?></h3>
+                                <h3 class="fw-bold text-warning"><?= $eventDraft ?></h3>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- TABLE EVENT -->
+                <!-- TABEL DAFTAR EVENT -->
                 <div class="card shadow-sm">
                     <div class="card-header bg-dark text-white">
                         <h5 class="mb-0">Daftar Event Kampus</h5>
                     </div>
-                    
                     <div class="card-body">
                         <div class="table-responsive">
                             <table class="table table-striped align-middle text-center">
@@ -147,35 +129,23 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                                         <th>Gambar</th>
                                         <th>Nama Event</th>
                                         <th>Kategori</th>
-                                        <th>Tanggal Mulai</th>
-                                        <th>Tanggal Selesai</th>
+                                        <th>Tanggal</th>
+                                        <th>Waktu</th>
                                         <th>Lokasi</th>
                                         <th>Status</th>
                                         <th>Aksi</th>
                                     </tr>
                                 </thead>
-                                
                                 <tbody>
                                     <?php if ($eventsQuery && mysqli_num_rows($eventsQuery) > 0): ?>
-                                        <?php $nomor = 1; while ($dataEvent = mysqli_fetch_assoc($eventsQuery)): 
-                                            // Escape semua data untuk keamanan
-                                            $idEvent = (int)$dataEvent['id'];
-                                            $namaEvent = htmlspecialchars($dataEvent['nama_event'], ENT_QUOTES, 'UTF-8');
-                                            $kategoriEvent = htmlspecialchars($dataEvent['kategori'] ?? '', ENT_QUOTES, 'UTF-8');
-                                            $lokasiEvent = htmlspecialchars($dataEvent['lokasi'], ENT_QUOTES, 'UTF-8');
-                                            $gambarEvent = htmlspecialchars($dataEvent['gambar'] ?? '', ENT_QUOTES, 'UTF-8');
-                                            $deskripsiEvent = htmlspecialchars($dataEvent['deskripsi'] ?? '', ENT_QUOTES, 'UTF-8');
-                                            $statusEvent = $dataEvent['status'];
-                                        ?>
+                                        <?php $no = 1; while ($event = mysqli_fetch_assoc($eventsQuery)): ?>
                                             <tr>
-                                                <td><?= $nomor++ ?></td>
+                                                <td><?= $no++ ?></td>
                                                 <td>
-                                                    <?php if (!empty($gambarEvent)): ?>
-                                                        <img src="<?= $gambarEvent ?>" 
-                                                             alt="<?= $namaEvent ?>" 
-                                                             class="img-fluid rounded" 
-                                                             width="80" 
-                                                             style="object-fit: cover; height: 60px;">
+                                                    <?php if (!empty($event['gambar'])): ?>
+                                                        <img src="<?= htmlspecialchars($event['gambar']) ?>" 
+                                                             alt="<?= htmlspecialchars($event['nama_event']) ?>" 
+                                                             class="img-fluid rounded" width="80" style="object-fit: cover; height: 60px;">
                                                     <?php else: ?>
                                                         <div class="bg-light rounded d-flex align-items-center justify-content-center" 
                                                              style="width: 80px; height: 60px;">
@@ -183,47 +153,51 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                                                         </div>
                                                     <?php endif; ?>
                                                 </td>
-                                                
-                                                <td><?= $namaEvent ?></td>
-                                                
+                                                <td><?= htmlspecialchars($event['nama_event']) ?></td>
                                                 <td>
-                                                    <?php if (!empty($kategoriEvent)): ?>
-                                                        <span class="badge bg-info"><?= $kategoriEvent ?></span>
+                                                    <?php if (!empty($event['kategori'])): ?>
+                                                        <span class="badge bg-info"><?= htmlspecialchars($event['kategori']) ?></span>
                                                     <?php else: ?>
                                                         <span class="badge bg-secondary">-</span>
                                                     <?php endif; ?>
                                                 </td>
-                                                
-                                                <td><?= date('d M Y', strtotime($dataEvent['tanggal_mulai'])) ?></td>
-                                                <td><?= date('d M Y', strtotime($dataEvent['tanggal_selesai'])) ?></td>
-                                                <td><?= $lokasiEvent ?></td>
-                                                
                                                 <td>
-                                                    <span class="badge bg-<?= $statusEvent == 'aktif' ? 'success' : 'warning' ?>">
-                                                        <?= $statusEvent == 'aktif' ? 'Aktif' : 'Draft' ?>
+                                                    <?= date('d/m/Y', strtotime($event['tanggal_mulai'])) ?>
+                                                    <?php if ($event['tanggal_mulai'] != $event['tanggal_selesai']): ?>
+                                                        <br><small class="text-muted">sampai <?= date('d/m/Y', strtotime($event['tanggal_selesai'])) ?></small>
+                                                    <?php endif; ?>
+                                                </td>
+                                                <td>
+                                                    <?= date('H:i', strtotime($event['waktu_mulai'])) ?> - 
+                                                    <?= date('H:i', strtotime($event['waktu_selesai'])) ?>
+                                                </td>
+                                                <td><?= htmlspecialchars($event['lokasi']) ?></td>
+                                                <td>
+                                                    <span class="badge bg-<?= $event['status'] == 'aktif' ? 'success' : 'warning' ?>">
+                                                        <?= $event['status'] == 'aktif' ? 'Aktif' : 'Draft' ?>
                                                     </span>
                                                 </td>
-                                                
                                                 <td>
                                                     <button class="btn btn-sm btn-warning me-1" 
                                                             data-bs-toggle="modal" 
                                                             data-bs-target="#modalEditEvent" 
                                                             onclick="setDataEdit(
-                                                                <?= $idEvent ?>, 
-                                                                '<?= addslashes($namaEvent) ?>', 
-                                                                '<?= addslashes($lokasiEvent) ?>', 
-                                                                '<?= $statusEvent ?>', 
-                                                                '<?= $dataEvent['tanggal_mulai'] ?>', 
-                                                                '<?= $dataEvent['tanggal_selesai'] ?>', 
-                                                                `<?= addslashes($dataEvent['deskripsi']) ?>`, 
-                                                                '<?= addslashes($kategoriEvent) ?>'
+                                                                <?= $event['id'] ?>, 
+                                                                '<?= addslashes($event['nama_event']) ?>', 
+                                                                '<?= addslashes($event['lokasi']) ?>', 
+                                                                '<?= $event['status'] ?>', 
+                                                                '<?= $event['tanggal_mulai'] ?>', 
+                                                                '<?= $event['tanggal_selesai'] ?>',
+                                                                '<?= $event['waktu_mulai'] ?>',
+                                                                '<?= $event['waktu_selesai'] ?>',
+                                                                `<?= addslashes($event['deskripsi']) ?>`, 
+                                                                '<?= addslashes($event['kategori']) ?>'
                                                             )">
                                                         <i class="bi bi-pencil"></i> Edit
                                                     </button>
-                                                    
-                                                    <a href="hapus_event.php?id=<?= $idEvent ?>" 
+                                                    <a href="hapus_event.php?id=<?= $event['id'] ?>" 
                                                        class="btn btn-sm btn-danger" 
-                                                       onclick="return confirm('Yakin hapus event <?= addslashes($namaEvent) ?>?')">
+                                                       onclick="return confirm('Yakin hapus event <?= addslashes($event['nama_event']) ?>?')">
                                                         <i class="bi bi-trash"></i> Hapus
                                                     </a>
                                                 </td>
@@ -232,7 +206,7 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                                     <?php else: ?>
                                         <tr>
                                             <td colspan="9" class="text-center text-muted py-4">
-                                                Belum ada event yang ditambahkan.
+                                                <i class="bi bi-calendar-x me-2"></i>Belum ada event yang ditambahkan.
                                             </td>
                                         </tr>
                                     <?php endif; ?>
@@ -242,7 +216,7 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                     </div>
                 </div>
 
-                <!-- FOOTER -->
+                <!-- FOOTER DASHBOARD -->
                 <footer class="text-center mt-4 text-muted small">
                     <hr />
                     <p class="mb-0">© 2025 Informasi Event Kampus Polibatam</p>
@@ -251,17 +225,14 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
         </div>
     </div>
 
-    <!-- MODAL TAMBAH EVENT -->
+    <!-- MODAL TAMBAH EVENT BARU -->
     <div class="modal fade" id="modalTambahEvent" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-dark text-white">
-                    <h5 class="modal-title fw-bold">
-                        <i class="bi bi-plus-circle me-2"></i>Tambah Event Baru
-                    </h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-plus-circle me-2"></i>Tambah Event Baru</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                
                 <div class="modal-body">
                     <form method="POST" action="tambah_event.php" enctype="multipart/form-data" id="formTambahEvent">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>" />
@@ -288,19 +259,30 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Tanggal Mulai <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" name="tanggal_mulai" required>
+                                <label class="form-label fw-bold">Lokasi <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" name="lokasi" required>
                             </div>
                         </div>
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Lokasi <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" name="lokasi" required>
+                                <label class="form-label fw-bold">Tanggal Mulai <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="tanggal_mulai" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Tanggal Selesai <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" name="tanggal_selesai" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Waktu Mulai <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" name="waktu_mulai" value="08:00" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Waktu Selesai <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" name="waktu_selesai" value="22:00" required>
                             </div>
                         </div>
                         
@@ -321,9 +303,7 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <button type="button" class="btn btn-secondary me-md-2" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-dark">
-                                <i class="bi bi-plus-circle me-1"></i> Tambah Event
-                            </button>
+                            <button type="submit" class="btn btn-dark"><i class="bi bi-plus-circle me-1"></i> Tambah Event</button>
                         </div>
                     </form>
                 </div>
@@ -336,12 +316,9 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header bg-warning text-white">
-                    <h5 class="modal-title fw-bold">
-                        <i class="bi bi-pencil-square me-2"></i>Edit Event
-                    </h5>
+                    <h5 class="modal-title fw-bold"><i class="bi bi-pencil-square me-2"></i>Edit Event</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                
                 <div class="modal-body">
                     <form method="POST" action="edit_event.php" enctype="multipart/form-data" id="formEditEvent">
                         <input type="hidden" id="inputEditId" name="id">
@@ -369,19 +346,30 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                                 </select>
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Tanggal Mulai <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" id="inputEditTanggalMulai" name="tanggal_mulai" required>
+                                <label class="form-label fw-bold">Lokasi <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="inputEditLokasi" name="lokasi" required>
                             </div>
                         </div>
                         
                         <div class="row mb-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-bold">Lokasi <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="inputEditLokasi" name="lokasi" required>
+                                <label class="form-label fw-bold">Tanggal Mulai <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="inputEditTanggalMulai" name="tanggal_mulai" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-bold">Tanggal Selesai <span class="text-danger">*</span></label>
                                 <input type="date" class="form-control" id="inputEditTanggalSelesai" name="tanggal_selesai" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Waktu Mulai <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="inputEditWaktuMulai" name="waktu_mulai" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-bold">Waktu Selesai <span class="text-danger">*</span></label>
+                                <input type="time" class="form-control" id="inputEditWaktuSelesai" name="waktu_selesai" required>
                             </div>
                         </div>
                         
@@ -402,9 +390,7 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                             <button type="button" class="btn btn-secondary me-md-2" data-bs-dismiss="modal">Batal</button>
-                            <button type="submit" class="btn btn-warning">
-                                <i class="bi bi-check-circle me-1"></i> Update Event
-                            </button>
+                            <button type="submit" class="btn btn-warning"><i class="bi bi-check-circle me-1"></i> Update Event</button>
                         </div>
                     </form>
                 </div>
@@ -412,50 +398,49 @@ $eventsQuery = $connection->query("SELECT * FROM events ORDER BY created_at DESC
         </div>
     </div>
 
-    <!-- External JavaScript -->
     <script src="bootstrap/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Internal JavaScript -->
     <script>
-        // SET DATA EDIT FUNCTION
-        function setDataEdit(id, nama, lokasi, status, tanggalMulai, tanggalSelesai, deskripsi, kategori) {
+        // FUNGSI UNTUK MENGISI DATA EDIT KE FORM MODAL
+        function setDataEdit(id, nama, lokasi, status, tanggalMulai, tanggalSelesai, waktuMulai, waktuSelesai, deskripsi, kategori) {
             document.getElementById('inputEditId').value = id;
             document.getElementById('inputEditNamaEvent').value = nama;
             document.getElementById('inputEditLokasi').value = lokasi;
             document.getElementById('selectEditStatus').value = status;
             document.getElementById('inputEditTanggalMulai').value = tanggalMulai;
             document.getElementById('inputEditTanggalSelesai').value = tanggalSelesai;
+            document.getElementById('inputEditWaktuMulai').value = waktuMulai;
+            document.getElementById('inputEditWaktuSelesai').value = waktuSelesai;
             document.getElementById('textareaEditDeskripsi').value = deskripsi;
             document.getElementById('selectEditKategori').value = kategori;
         }
 
-        // VALIDASI TANGGAL
+        // VALIDASI TANGGAL (AGAR TANGGAL SELESAI TIDAK LEBIH AWAL DARI TANGGAL MULAI)
         document.addEventListener('DOMContentLoaded', function() {
-            const tanggalHariIni = new Date().toISOString().split('T')[0];
+            const today = new Date().toISOString().split('T')[0];
             
-            // Validasi form tambah
+            // VALIDASI FORM TAMBAH EVENT
             const formTambah = document.getElementById('formTambahEvent');
             if (formTambah) {
-                const inputTanggalMulai = formTambah.querySelector('input[name="tanggal_mulai"]');
-                const inputTanggalSelesai = formTambah.querySelector('input[name="tanggal_selesai"]');
+                const tglMulai = formTambah.querySelector('input[name="tanggal_mulai"]');
+                const tglSelesai = formTambah.querySelector('input[name="tanggal_selesai"]');
                 
-                if (inputTanggalMulai) {
-                    inputTanggalMulai.min = tanggalHariIni;
-                    inputTanggalMulai.addEventListener('change', function() {
-                        if (inputTanggalSelesai) inputTanggalSelesai.min = this.value;
+                if (tglMulai) {
+                    tglMulai.min = today;
+                    tglMulai.addEventListener('change', function() {
+                        if (tglSelesai) tglSelesai.min = this.value;
                     });
                 }
             }
             
-            // Validasi form edit
+            // VALIDASI FORM EDIT EVENT
             const formEdit = document.getElementById('formEditEvent');
             if (formEdit) {
-                const editInputTanggalMulai = formEdit.querySelector('#inputEditTanggalMulai');
-                const editInputTanggalSelesai = formEdit.querySelector('#inputEditTanggalSelesai');
+                const editTglMulai = formEdit.querySelector('#inputEditTanggalMulai');
+                const editTglSelesai = formEdit.querySelector('#inputEditTanggalSelesai');
                 
-                if (editInputTanggalMulai) {
-                    editInputTanggalMulai.addEventListener('change', function() {
-                        if (editInputTanggalSelesai) editInputTanggalSelesai.min = this.value;
+                if (editTglMulai) {
+                    editTglMulai.addEventListener('change', function() {
+                        if (editTglSelesai) editTglSelesai.min = this.value;
                     });
                 }
             }
