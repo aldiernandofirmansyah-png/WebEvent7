@@ -3,7 +3,7 @@
 // Nama File: koneksi.php
 // Deskripsi: File untuk koneksi ke database event kampus
 // Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
-// Tanggal: 
+// Tanggal: 07/11/2025 - 02/01/2026
 // ==================================================
 
 // Konfigurasi server database
