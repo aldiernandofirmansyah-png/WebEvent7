@@ -3,7 +3,7 @@
 // Nama File: process_contact.php
 // Deskripsi: Proses form hubungi kami - simpan ke file text
 // Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
-// Tanggal: 
+// Tanggal:  07/11/2025 - 02/01/2026
 // ==================================================
 
 // Hanya terima request method POST
