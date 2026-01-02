@@ -3,7 +3,7 @@
 // Nama File: process_login.php
 // Deskripsi: File untuk memproses login admin dengan validasi sederhana
 // Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
-// Tanggal: 
+// Tanggal:  07/11/2025 - 02/01/2026
 // ==================================================
 
 // Mulai session untuk menyimpan status login
