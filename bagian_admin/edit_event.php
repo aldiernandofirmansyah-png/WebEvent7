@@ -2,8 +2,8 @@
 // ==================================================
 // Nama File: edit_event.php  
 // Deskripsi: File untuk memproses update data event yang ada
-// Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
-// Tanggal: 
+// Dibuat oleh: Maria Putri Agustina Tamba - NIM: 3312511025
+// Tanggal:  07/11/2025 - 03/01/2026
 // ==================================================
 
 session_start();
