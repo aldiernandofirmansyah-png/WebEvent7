@@ -2,8 +2,8 @@
 // ==================================================
 // Nama File: hapus_event.php
 // Deskripsi: File untuk menghapus event dari database dan sistem file
-// Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
-// Tanggal: 
+// Dibuat oleh: Maria Putri Agustina Tamba - NIM: 3312511025
+// Tanggal:  07/11/2025 - 03/01/2026
 // ==================================================
 
 session_start();
