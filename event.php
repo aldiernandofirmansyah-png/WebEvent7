@@ -2,7 +2,7 @@
 // ==================================================
 // Nama File: event.php
 // Deskripsi: Halaman untuk menampilkan daftar event kampus
-// Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
+// Dibuat oleh: Lusiana Hotmauli Panggabean - NIM: 3312511024
 // Tanggal: 03 Januari 2026
 // ==================================================
 
