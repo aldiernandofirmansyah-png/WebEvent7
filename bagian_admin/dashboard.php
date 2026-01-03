@@ -3,7 +3,7 @@
 // Nama File: dashboard.php
 // Deskripsi: Dashboard admin untuk mengelola event kampus dengan CRUD
 // Dibuat oleh: Adetyas Fauzia - NIM: 3312511023
-// Tanggal: 03/01/2025
+// Tanggal: 07/11/2025 - 03/01/2026
 // ==================================================
 
 session_start();
