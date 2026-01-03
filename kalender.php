@@ -2,8 +2,8 @@
 // ==================================================
 // Nama File: kalender.php
 // Deskripsi: Halaman kalender event kampus
-// Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
-// Tanggal: 
+// Dibuat oleh: Lusiana Hotmauli Panggabean - NIM: 3312511024
+// Tanggal: 03-01-2026
 // ==================================================
 
 require_once 'koneksi.php';
