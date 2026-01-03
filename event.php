@@ -3,7 +3,7 @@
 // Nama File: event.php
 // Deskripsi: Halaman untuk menampilkan daftar event kampus
 // Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
-// Tanggal: 
+// Tanggal: 03 Januari 2026
 // ==================================================
 
 require_once 'koneksi.php';
