@@ -2,8 +2,8 @@
 // ==================================================
 // Nama File: tambah_event.php
 // Deskripsi: File untuk memproses penambahan event baru ke database
-// Dibuat oleh: Aldi Ernando Firmansyah - NIM: 3312511026
-// Tanggal: 
+// Dibuat oleh: Adetyas Fauzia - NIM: 3312511023
+// Tanggal: 03/01/2025
 // ==================================================
 
 session_start();
