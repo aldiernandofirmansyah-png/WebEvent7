@@ -3,7 +3,7 @@
 // Nama File: tambah_event.php
 // Deskripsi: File untuk memproses penambahan event baru ke database
 // Dibuat oleh: Adetyas Fauzia - NIM: 3312511023
-// Tanggal: 03/01/2025
+// Tanggal: 07/11/2025 - 03/01/2026
 // ==================================================
 
 session_start();
