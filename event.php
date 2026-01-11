@@ -14,19 +14,6 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
 
 <!DOCTYPE html>
 <html lang="id">
-<head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Event Kampus Polibatam</title>
-    <link href="bootstrap/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet" />
-    <style>
-        body { padding-top: 80px; background-color: #f8fafc; }
-        .card { transition: transform 0.2s; }
-        .card:hover { transform: scale(1.03); }
-        .card-img-top { height: 200px; object-fit: cover; }
-    </style>
-</head>
 <body>
     <!-- NAVBAR UTAMA -->
     <nav class="navbar navbar-expand-lg bg-white shadow-sm fixed-top">
