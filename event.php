@@ -120,7 +120,7 @@ $eventsQuery = mysqli_query($connection, "SELECT * FROM events WHERE status = 'a
                                 
                                 <span class="badge bg-success">Aktif</span>
                                 
-                                <!-- TOMBOL LIHAT DETAIL -->
+                                <!-- BUTTON LIHAT DETAIL -->
                                 <button class="btn btn-outline-primary w-100 mt-2" 
                                         data-bs-toggle="modal" 
                                         data-bs-target="#modalDetail<?= $eventId ?>">
