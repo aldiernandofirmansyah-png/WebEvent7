@@ -273,7 +273,7 @@ $tahunIni = date('Y');
 
     <!-- FOOTER HALAMAN -->
     <footer class="bg-light text-center py-3 mt-5">
-        <p class="mb-0">© Informasi Event Kampus Polibatam 2025 2026</p>
+        <p class="mb-0">© Informasi Event Kampus Polibatam 2025</p>
     </footer>
 
     <!-- SCRIPT BOOTSTRAP -->
